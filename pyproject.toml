@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "A simple Python package for managing Bitwarden secrets"
 readme = "README.md"
 authors = [
-    {name = "Toru AI", email = "mpaszynski@toruai.com"}
+    {name = "ToruAI", email = "mpaszynski@toruai.com"}
 ]
 license = {text = "MIT"}
 classifiers = [
@@ -30,3 +30,6 @@ packages = ["vault"]
 
 [tool.setuptools.package-data]
 vault = ["py.typed"]
+
+[project.scripts]
+vault = "vault.__main__:main"
