@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vault"
+version = "0.1.0"
+description = "A simple Python package for managing Bitwarden secrets"
+readme = "README.md"
+authors = [
+    {name = "Toru AI", email = "mpaszynski@toruai.com"}
+]
+license = {text = "MIT"}
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+requires-python = ">=3.6"
+dependencies = [
+    "bitwarden-sdk",
+]
+
+[project.urls]
+Homepage = "https://github.com/ToruAI/vault"
+Issues = "https://github.com/ToruAI/vault/issues"
+
+[tool.setuptools]
+packages = ["vault"]
+
+[tool.setuptools.package-data]
+vault = ["py.typed"]
