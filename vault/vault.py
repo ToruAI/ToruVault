@@ -13,9 +13,23 @@ from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 import base64
+from .lazy_dict import LazySecretsDict
+
+# Try importing keyring - it might not be available in container environments
+try:
+    import keyring
+    _KEYRING_AVAILABLE = True
+except ImportError:
+    _KEYRING_AVAILABLE = False
 
 # Setup minimal logging
 logger = logging.getLogger(__name__)
+
+# Constants for keyring storage
+_KEYRING_SERVICE_NAME = "bitwarden_vault"
+_KEYRING_BWS_TOKEN_KEY = "bws_token"
+_KEYRING_ORG_ID_KEY = "organization_id"
+_KEYRING_STATE_FILE_KEY = "state_file"
 
 # Secure cache configuration
 _SECRET_CACHE_TIMEOUT = 300  # 5 minutes
@@ -175,6 +189,53 @@ def _clear_cache() -> None:
 # Register the cache clearing function to run on exit
 atexit.register(_clear_cache)
 
+def _get_from_keyring_or_env(key, env_var):
+    """
+    Get a value from keyring or environment variable
+    
+    Args:
+        key (str): Key in keyring
+        env_var (str): Environment variable name
+    
+    Returns:
+        str: Value from keyring or environment variable
+    """
+    value = None
+    
+    # Try keyring first if available
+    if _KEYRING_AVAILABLE:
+        try:
+            value = keyring.get_password(_KEYRING_SERVICE_NAME, key)
+        except Exception as e:
+            logger.warning(f"Failed to get {key} from keyring: {e}")
+    
+    # Fall back to environment variable
+    if not value:
+        value = os.getenv(env_var)
+    
+    return value
+
+def set_to_keyring(key, value):
+    """
+    Set a value to keyring
+    
+    Args:
+        key (str): Key in keyring
+        value (str): Value to store
+    
+    Returns:
+        bool: True if successful, False otherwise
+    """
+    if not _KEYRING_AVAILABLE:
+        return False
+    
+    try:
+        keyring.set_password(_KEYRING_SERVICE_NAME, key, value)
+        return True
+    except Exception as e:
+        logger.warning(f"Failed to set {key} to keyring: {e}")
+        return False
+
 def _initialize_client():
     """
     Initialize the Bitwarden client
@@ -182,14 +243,18 @@ def _initialize_client():
     # Get environment variables with defaults
     api_url = os.getenv("API_URL", "https://api.bitwarden.com")
     identity_url = os.getenv("IDENTITY_URL", "https://identity.bitwarden.com")
-    bws_token = os.getenv("BWS_TOKEN")
-    state_path = os.getenv("STATE_FILE")
+    
+    # Get BWS_TOKEN from keyring or environment variable
+    bws_token = _get_from_keyring_or_env(_KEYRING_BWS_TOKEN_KEY, "BWS_TOKEN")
+    
+    # Get STATE_FILE from keyring or environment variable
+    state_path = _get_from_keyring_or_env(_KEYRING_STATE_FILE_KEY, "STATE_FILE")
     
     # Validate required environment variables
     if not bws_token:
-        raise ValueError("BWS_TOKEN environment variable is required")
+        raise ValueError("BWS_TOKEN not found in keyring or environment variable")
     if not state_path:
-        raise ValueError("STATE_FILE environment variable is required")
+        raise ValueError("STATE_FILE not found in keyring or environment variable")
         
     # Ensure state file directory exists
     state_dir = os.path.dirname(state_path)
@@ -235,9 +300,10 @@ def _load_secrets(organization_id=None, project_id=None):
     
     # Validate organization ID
     if not organization_id:
-        organization_id = os.getenv("ORGANIZATION_ID")
+        # Try to get organization ID from keyring or environment variable
+        organization_id = _get_from_keyring_or_env(_KEYRING_ORG_ID_KEY, "ORGANIZATION_ID")
         if not organization_id:
-            raise ValueError("ORGANIZATION_ID environment variable is required")
+            raise ValueError("ORGANIZATION_ID not found in keyring or environment variable")
     
     # Check if we have valid cached secrets for this combination
     cache_key = f"{organization_id}:{project_id or ''}"
@@ -338,29 +404,99 @@ def get(organization_id=None, project_id=None, refresh=False):
         refresh (bool, optional): Force refresh the secrets cache
         
     Returns:
-        dict: Dictionary of secrets with their names as keys
+        dict: Dictionary of secrets with their names as keys, using lazy loading
     """
-    # Check if we need to force a refresh
-    if refresh:
+    # Build the service name for keyring storage
+    if organization_id is None:
+        organization_id = os.getenv("ORGANIZATION_ID")
+    service_name = f"vault_{organization_id or 'default'}"
+    
+    # Function to either fetch from keyring or decrypt from cache based on container flag
+    def _load_decrypted_secrets():
+        # Check if we need to force a refresh
+        if refresh:
+            return _load_secrets(organization_id, project_id)
+        
+        # Otherwise try to use cached values first
+        cache_key = f"{organization_id}:{project_id or ''}"
+        current_time = time.time()
+        
+        if cache_key in _secrets_cache:
+            timestamp, encrypted_secrets = _secrets_cache[cache_key]
+            
+            # If cache hasn't expired
+            if current_time - timestamp < _SECRET_CACHE_TIMEOUT:
+                # If we have encryption, try to decrypt
+                if encrypted_secrets:
+                    decrypted_secrets = _decrypt_secrets(encrypted_secrets)
+                    if decrypted_secrets:
+                        return decrypted_secrets
+                # Otherwise return the unencrypted data (backward compatibility)
+                elif isinstance(encrypted_secrets, dict):
+                    return encrypted_secrets.copy()
+        
+        # If we couldn't get from cache, load fresh
         return _load_secrets(organization_id, project_id)
     
-    # Otherwise try to use cached values first
-    cache_key = f"{organization_id}:{project_id or ''}"
-    current_time = time.time()
+    # Get all secrets and their keys
+    all_secrets = _load_decrypted_secrets()
+    secret_keys = set(all_secrets.keys())
     
-    if cache_key in _secrets_cache:
-        timestamp, encrypted_secrets = _secrets_cache[cache_key]
+    # Store secrets in keyring if available
+    if _KEYRING_AVAILABLE:
+        for key, value in all_secrets.items():
+            keyring.set_password(service_name, key, value)
+    
+    # When keyring is unavailable (likely in container)
+    if not _KEYRING_AVAILABLE:
+        # Create a dictionary of cached secrets for container mode
+        container_secrets = {}
+        encrypted_data = None
+        cache_key = f"{organization_id}:{project_id or ''}"
         
-        # If cache hasn't expired
-        if current_time - timestamp < _SECRET_CACHE_TIMEOUT:
-            # If we have encryption, try to decrypt
-            if encrypted_secrets:
-                decrypted_secrets = _decrypt_secrets(encrypted_secrets)
-                if decrypted_secrets:
-                    return decrypted_secrets
-            # Otherwise return the unencrypted data (backward compatibility)
-            elif isinstance(encrypted_secrets, dict):
-                return encrypted_secrets.copy()
-    
-    # If we couldn't get from cache, load fresh
-    return _load_secrets(organization_id, project_id)
+        # If we have a cached encrypted version, use that
+        if cache_key in _secrets_cache:
+            _, encrypted_data = _secrets_cache[cache_key]
+            
+        # Create getter function for container mode
+        def _container_getter(key):
+            if key in container_secrets:
+                return container_secrets[key]
+            
+            # If not in memory cache, check if we have pre-loaded decrypted secrets
+            if all_secrets and key in all_secrets:
+                container_secrets[key] = all_secrets[key]
+                return container_secrets[key]
+                
+            # Otherwise, try to decrypt from cache
+            if encrypted_data and not isinstance(encrypted_data, dict):
+                decrypted = _decrypt_secrets(encrypted_data)
+                if decrypted and key in decrypted:
+                    container_secrets[key] = decrypted[key]
+                    return container_secrets[key]
+                
+            # If all else fails, load from API
+            fresh_secrets = _load_secrets(organization_id, project_id)
+            if key in fresh_secrets:
+                container_secrets[key] = fresh_secrets[key]
+                return container_secrets[key]
+                
+            return None
+        
+        # Create the lazy dictionary with container getter
+        return LazySecretsDict(secret_keys, _container_getter)
+    else:
+        # Create getter function for keyring mode
+        def _keyring_getter(key):
+            return keyring.get_password(service_name, key)
+            
+        # Create setter function for keyring mode
+        def _keyring_setter(key, value):
+            keyring.set_password(service_name, key, value)
+            
+        # Create deleter function for keyring mode
+        def _keyring_deleter(key):
+            keyring.delete_password(service_name, key)
+        
+        # Create the lazy dictionary with keyring getter/setter/deleter
+        return LazySecretsDict(secret_keys, _keyring_getter, _keyring_setter, _keyring_deleter)
