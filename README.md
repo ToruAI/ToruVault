@@ -1,17 +1,18 @@
 # Vault
 
-A simple Python package for managing Bitwarden secrets.
+A simple Python package for managing Bitwarden secrets with enhanced security.
 
 ## Features
 
 - Load secrets from Bitwarden Secret Manager into environment variables
 - Get secrets as a Python dictionary
 - Filter secrets by project ID
-- Cache secrets for performance
+- Secure in-memory caching with encryption
+- Automatic cache expiration (5 minutes)
+- Secure file permissions for state storage
+- Machine-specific secret protection
 
 ## Installation
-
-### From PyPI (when published)
 
 ```bash
 pip install vault
@@ -40,6 +41,16 @@ The following environment variables are required:
 
 ## Usage
 
+### Listing Available Projects
+
+```bash
+# List all projects in your organization
+python -m vault list 
+
+# With a specific organization ID
+python -m vault list --org-id YOUR_ORGANIZATION_ID
+```
+
 ### Loading secrets into environment variables
 
 ```python
@@ -57,6 +68,9 @@ vault.env_load(organization_id="your-org-id")
 
 # Load secrets for a specific project
 vault.env_load(project_id="your-project-id")
+
+# Override existing environment variables (default: False)
+vault.env_load(override=True)
 ```
 
 ### Getting secrets as a dictionary
@@ -74,6 +88,17 @@ secrets = vault.get(refresh=True)
 # Get secrets for a specific project
 secrets = vault.get(project_id="your-project-id")
 ```
+
+## Security Features
+
+The vault package includes several security enhancements:
+
+1. **Memory Protection**: Secrets are encrypted in memory using Fernet encryption (AES-128)
+2. **Cache Expiration**: Cached secrets expire after 5 minutes by default
+3. **Secure File Permissions**: Sets secure permissions on state files
+4. **Machine-Specific Encryption**: Uses machine-specific identifiers for encryption keys
+5. **Cache Clearing**: Automatically clears secret cache on program exit
+6. **Environment Variable Protection**: Doesn't override existing environment variables by default
 
 ## Building and Publishing
 
