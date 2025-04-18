@@ -163,21 +163,3 @@ WORKDIR /app
 
 CMD ["python", "your_app.py"]
 ```
-
-## Building and Publishing
-
-Build the package:
-
-```bash
-python -m build
-```
-
-Publish to PyPI:
-
-```bash
-python -m twine upload dist/*
-```
-
-## License
-
-MIT
