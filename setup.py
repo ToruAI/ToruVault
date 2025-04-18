@@ -6,6 +6,8 @@ setup(
     packages=find_packages(),
     install_requires=[
         "bitwarden-sdk",
+        "keyring>=23.0.0",
+        "cryptography>=36.0.0",
     ],
     description="A simple Python package for managing Bitwarden secrets",
     author="Toru AI",

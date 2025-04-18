@@ -19,12 +19,20 @@ A simple Python package for managing Bitwarden secrets with enhanced security.
 pip install vault
 ```
 
+This will automatically install all required dependencies:
+- bitwarden-sdk - For interfacing with Bitwarden API
+- keyring - For secure credential storage
+- cryptography - For encryption/decryption operations
+
 ### From Source
 
 ```bash
 # Clone the repository
 git clone https://github.com/ToruAI/vault.git
 cd vault
+
+# Install dependencies
+pip install -r requirements.txt
 
 # Install in development mode
 pip install -e .
