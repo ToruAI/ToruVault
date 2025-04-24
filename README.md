@@ -56,6 +56,8 @@ This will prompt you to enter:
 - Your Bitwarden organization ID (ORGANIZATION_ID)
 - The path to the state file (STATE_FILE)
 
+[How to get the BWS_TOKEN, ORGANIZATION_ID, and STATE_FILE](#Bitwarden-Secrets)
+
 These credentials will be securely stored in your OS keyring and used automatically by the vault.
 
 ### Option 2: Environment Variables
@@ -163,3 +165,36 @@ WORKDIR /app
 
 CMD ["python", "your_app.py"]
 ```
+
+## Bitwarden secrets
+
+### BWS_TOKEN
+
+Your Bitwarden access token. You can get it from the Bitwarden web app:
+
+1. Log in to your Bitwarden account
+2. Go to Secret Manager at left bottom
+3. Go to the "Machine accounts" section
+4. Create new machine account.
+5. Go to Access Token Tab
+![image](img/token-tab.png)
+6. This is your `BWS_TOKEN`. 
+
+Remember that you need to assign access to the machine account for the projects you want to use.
+
+### ORGANIZATION_ID
+
+Your Bitwarden organization ID. You can get it from the Bitwarden web app:
+
+1. Log in to your Bitwarden account
+2. Go to Secret Manager at left bottom
+3. Go to the "Machine accounts" section
+4. Create new machine account.
+5. Go to Config Tab
+6. There is your `ORGANIZATION_ID`.
+
+### STATE_FILE
+
+The `STATE_FILE` is used by the login_access_token method to store persistent authentication state information after successfully logging in with an access token. 
+
+You can set it to any existing file path. 
