@@ -1,4 +1,4 @@
-![image](img/logo.svg)
+<img src="img/logo.svg" alt="ToruVault Logo" width="300"/>
 
 # ToruVault
 
