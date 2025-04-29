@@ -1,4 +1,4 @@
-![image](img/logo.png)
+![image](img/logo.svg)
 
 # ToruVault
 
