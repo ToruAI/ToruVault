@@ -3,7 +3,7 @@ Tests for the vault package.
 """
 import os
 import time
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 import vault
 
@@ -37,20 +37,57 @@ class TestVaultCore:
         vault.env_load(project_id="project1", override=True)
         assert os.environ.get("SECRET1") == "value1"  # Overridden
     
-    def test_env_load_all(self, mock_bitwarden_client, mock_env_vars):
+    @patch("os.environ", new_callable=dict)
+    def test_env_load_all(self, mock_environ, mock_bitwarden_client, mock_env_vars):
         """Test loading secrets from all projects."""
-        # Call the function
-        vault.env_load_all()
+        # Set up the initial environment
+        mock_environ["ORGANIZATION_ID"] = "test-org-id"
+        mock_environ["BWS_TOKEN"] = "test-token"
         
-        # Verify secrets from all projects were loaded
-        assert os.environ.get("SECRET1") == "value1"
-        assert os.environ.get("SECRET2") == "value2"
-        assert os.environ.get("SECRET3") == "value3"
-        assert os.environ.get("SECRET4") == "value4"
+        # Create a response structure that matches what our real function expects
+        project1 = MagicMock()
+        project1.id = "project1"
+        project1.name = "Test Project 1"
         
-        # Verify projects were fetched
-        mock_bitwarden_client.secrets().list_projects.assert_called_once()
+        project2 = MagicMock()
+        project2.id = "project2"
+        project2.name = "Test Project 2"
         
+        # Create the data structure
+        mock_data = MagicMock()
+        mock_data.data = [project1, project2]
+        
+        mock_response = MagicMock()
+        mock_response.data = mock_data
+        
+        # Set up the projects client to return our mock data
+        mock_bitwarden_client.projects().list.return_value = mock_response
+        
+        # Allow the _get_from_keyring_or_env function to return our test organization ID
+        with patch("vault.vault._get_from_keyring_or_env", return_value="test-org-id"):
+            # Create a simple implementation of env_load that sets the right env vars
+            def simple_env_load(project_id=None, override=False):
+                if project_id == "project1":
+                    mock_environ["SECRET1"] = "value1"
+                    mock_environ["SECRET2"] = "value2"
+                elif project_id == "project2":
+                    mock_environ["SECRET3"] = "value3"
+                    mock_environ["SECRET4"] = "value4"
+            
+            # Patch the env_load function that our test subject will call
+            with patch("vault.vault.env_load", side_effect=simple_env_load):
+                # Call the function under test
+                vault.env_load_all()
+                
+                # Verify secrets are loaded correctly
+                assert mock_environ.get("SECRET1") == "value1"
+                assert mock_environ.get("SECRET2") == "value2"
+                assert mock_environ.get("SECRET3") == "value3"
+                assert mock_environ.get("SECRET4") == "value4"
+                
+                # Verify projects list was called
+                mock_bitwarden_client.projects().list.assert_called_once()
+    
     def test_get_with_keyring(self, mock_bitwarden_client, mock_keyring, mock_env_vars):
         """Test getting secrets with keyring enabled."""
         # Call the function

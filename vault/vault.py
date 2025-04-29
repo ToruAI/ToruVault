@@ -394,23 +394,30 @@ def env_load_all(override=False):
         logger.error(f"Failed to initialize Bitwarden client: {e}")
         return
     
-    # Get all accessible projects
     try:
         # Sync to ensure we have the latest data
         client.secrets().sync(organization_id, None)
         
-        # Get all accessible projects
-        projects = client.secrets().list_projects(organization_id)
-        if not projects:
+        # Get all projects
+        projects_response = client.projects().list(organization_id)
+        
+        # Validate response format
+        if not hasattr(projects_response, 'data') or not hasattr(projects_response.data, 'data'):
             logger.warning(f"No projects found in organization {organization_id}")
             return
-            
-        # Load secrets from all projects into environment variables
-        for project in projects:
-            project_id = project.get("id")
-            if project_id:
+        
+        # Process each project
+        for project in projects_response.data.data:
+            if hasattr(project, 'id'):
+                project_id = str(project.id)
+                
                 # Load environment variables for this project
-                env_load(project_id=project_id, override=override)
+                try:
+                    # Get the secrets for this project and set them as environment variables
+                    env_load(project_id=project_id, override=override)
+                    logger.info(f"Loaded secrets from project: {getattr(project, 'name', project_id)}")
+                except Exception as e:
+                    logger.warning(f"Failed to load secrets from project {project_id}: {e}")
                 
     except Exception as e:
         logger.error(f"Failed to load all secrets into environment variables: {e}")

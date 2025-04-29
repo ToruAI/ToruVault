@@ -63,15 +63,29 @@ def mock_bitwarden_client():
     mock_secrets = MagicMock()
     mock_client.secrets.return_value = mock_secrets
     
+    # Mock projects service
+    mock_projects = MagicMock()
+    mock_client.projects.return_value = mock_projects
+    
     # Mock sync method
     mock_secrets.sync = MagicMock()
     
     # Mock list_projects method
-    mock_projects = [
+    project_data = [
         {"id": "project1", "name": "Test Project 1"},
         {"id": "project2", "name": "Test Project 2"}
     ]
-    mock_secrets.list_projects = MagicMock(return_value=mock_projects)
+    
+    # Create projects response object structure
+    class MockProjectsData:
+        def __init__(self):
+            self.data = project_data
+    
+    class MockProjectsResponse:
+        def __init__(self):
+            self.data = MockProjectsData()
+    
+    mock_projects.list = MagicMock(return_value=MockProjectsResponse())
     
     # Mock get_secrets method with test data
     project1_secrets = {

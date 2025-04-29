@@ -3,6 +3,7 @@ Tests for the vault command line interface.
 """
 import sys
 from unittest.mock import patch
+from unittest.mock import MagicMock
 
 # Assuming the CLI is implemented in vault.__main__
 # If it's elsewhere, adjust the import
@@ -40,15 +41,40 @@ class TestVaultCLI:
         # Since the __main__ might not be implemented yet, we'll just
         # test that the projects can be fetched correctly
         client = mock_bitwarden_client
-        projects = client.secrets().list_projects("test-org-id")
+        
+        # Create project objects with proper attributes
+        project1 = MagicMock()
+        project1.id = "project1"
+        project1.name = "Test Project 1"
+        
+        project2 = MagicMock()
+        project2.id = "project2" 
+        project2.name = "Test Project 2"
+        
+        # Create a project response that mimics the structure in env_load_all
+        class MockProjectData:
+            def __init__(self):
+                self.data = [project1, project2]
+        
+        class MockProjectResponse:
+            def __init__(self):
+                self.data = MockProjectData()
+        
+        # Set up the mock response
+        mock_response = MockProjectResponse()
+        mock_bitwarden_client.projects().list.return_value = mock_response
+        
+        # Call the method (as the CLI would)
+        with patch("vault.vault._get_from_keyring_or_env", return_value="test-org-id"):
+            projects_response = client.projects().list("test-org-id")
         
         # Verify projects were fetched
-        mock_bitwarden_client.secrets().list_projects.assert_called_once()
+        mock_bitwarden_client.projects().list.assert_called_once()
         
         # Check project information
-        assert len(projects) == 2
-        assert projects[0]["name"] == "Test Project 1"
-        assert projects[1]["name"] == "Test Project 2"
+        assert len(projects_response.data.data) == 2
+        assert projects_response.data.data[0].name == "Test Project 1"
+        assert projects_response.data.data[1].name == "Test Project 2"
         
     @patch("os.environ")
     def test_env_command(self, mock_environ, mock_bitwarden_client, mock_env_vars):
