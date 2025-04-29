@@ -285,47 +285,31 @@ def _initialize_client():
     
     return client
 
-def _load_secrets(organization_id=None, project_id=None):
+def _load_secrets(project_id=None):
     """
     Load secrets from Bitwarden
     
     Args:
-        organization_id (str): Organization ID
         project_id (str): Project ID to filter secrets
     
     Returns:
         dict: Dictionary of secrets with their names as keys
     """
-    global _secrets_cache
-    
-    # Validate organization ID
-    if not organization_id:
-        # Try to get organization ID from keyring or environment variable
-        organization_id = _get_from_keyring_or_env(_KEYRING_ORG_ID_KEY, "ORGANIZATION_ID")
-        if not organization_id:
-            raise ValueError("ORGANIZATION_ID not found in keyring or environment variable")
-    
-    # Check if we have valid cached secrets for this combination
-    cache_key = f"{organization_id}:{project_id or ''}"
-    current_time = time.time()
-    
-    if cache_key in _secrets_cache:
-        timestamp, encrypted_secrets = _secrets_cache[cache_key]
-        
-        # If cache hasn't expired
-        if current_time - timestamp < _SECRET_CACHE_TIMEOUT:
-            # If we have encryption, try to decrypt
-            if encrypted_secrets:
-                decrypted_secrets = _decrypt_secrets(encrypted_secrets)
-                if decrypted_secrets:
-                    return decrypted_secrets
-            # Otherwise return the unencrypted data (backward compatibility)
-            elif isinstance(encrypted_secrets, dict):
-                return encrypted_secrets.copy()
-    
+    # Initialize client with credentials from environment or keyring
     try:
         client = _initialize_client()
-        
+    except Exception as e:
+        logger.error(f"Failed to initialize Bitwarden client: {e}")
+        return {}
+    
+    # Get ORGANIZATION_ID from keyring or environment variable
+    organization_id = _get_from_keyring_or_env(_KEYRING_ORG_ID_KEY, "ORGANIZATION_ID")
+    if not organization_id:
+        logger.error("ORGANIZATION_ID not found in keyring or environment variable")
+        return {}
+    
+    # Get secrets from BitWarden
+    try:
         # Sync secrets to ensure we have the latest
         client.secrets().sync(organization_id, None)
         
@@ -368,54 +352,92 @@ def _load_secrets(organization_id=None, project_id=None):
         # Update the cache with encryption
         encrypted_data = _encrypt_secrets(secrets)
         if encrypted_data:
-            _secrets_cache[cache_key] = (current_time, encrypted_data)
+            _secrets_cache[f"{organization_id}:{project_id or ''}"] = (time.time(), encrypted_data)
         else:
-            _secrets_cache[cache_key] = (current_time, secrets.copy())
+            _secrets_cache[f"{organization_id}:{project_id or ''}"] = (time.time(), secrets.copy())
         
         return secrets
     except Exception as e:
         logger.error(f"Error loading secrets: {e}")
         raise
 
-def env_load(organization_id=None, project_id=None, override=False):
+def env_load(project_id=None, override=False):
     """
     Load all secrets related to the project into environmental variables.
     
     Args:
-        organization_id (str, optional): Organization ID
         project_id (str, optional): Project ID to filter secrets
         override (bool, optional): Whether to override existing environment variables
     """
-    secrets = _load_secrets(organization_id, project_id)
+    # Get all secrets from BWS
+    secrets = _load_secrets(project_id)
     
-    # Add each secret to environment variables
+    # Set environment variables
     for key, value in secrets.items():
-        # Only set if the environment variable doesn't exist or override is True
         if override or key not in os.environ:
             os.environ[key] = value
 
-def get(organization_id=None, project_id=None, refresh=False):
+def env_load_all(override=False):
+    """
+    Load all secrets from all projects that user has access to into environment variables
+    
+    Args:
+        override (bool, optional): Whether to override existing environment variables
+    """
+    # Get ORGANIZATION_ID from keyring or environment variable
+    organization_id = _get_from_keyring_or_env(_KEYRING_ORG_ID_KEY, "ORGANIZATION_ID")
+    
+    # Initialize Bitwarden client
+    try:
+        client = _initialize_client()
+    except Exception as e:
+        logger.error(f"Failed to initialize Bitwarden client: {e}")
+        return
+    
+    # Get all accessible projects
+    try:
+        # Sync to ensure we have the latest data
+        client.secrets().sync(organization_id, None)
+        
+        # Get all accessible projects
+        projects = client.secrets().list_projects(organization_id)
+        if not projects:
+            logger.warning(f"No projects found in organization {organization_id}")
+            return
+            
+        # Load secrets from all projects into environment variables
+        for project in projects:
+            project_id = project.get("id")
+            if project_id:
+                # Load environment variables for this project
+                env_load(project_id=project_id, override=override)
+                
+    except Exception as e:
+        logger.error(f"Failed to load all secrets into environment variables: {e}")
+
+def get(project_id=None, refresh=False, use_keyring=True):
     """
     Return a dictionary of all project secrets
     
     Args:
-        organization_id (str, optional): Organization ID
         project_id (str, optional): Project ID to filter secrets
         refresh (bool, optional): Force refresh the secrets cache
+        use_keyring (bool, optional): Whether to use system keyring (True) or in-memory encryption (False)
         
     Returns:
         dict: Dictionary of secrets with their names as keys, using lazy loading
     """
+    # Get ORGANIZATION_ID from keyring or environment variable
+    organization_id = _get_from_keyring_or_env(_KEYRING_ORG_ID_KEY, "ORGANIZATION_ID")
+    
     # Build the service name for keyring storage
-    if organization_id is None:
-        organization_id = os.getenv("ORGANIZATION_ID")
     service_name = f"vault_{organization_id or 'default'}"
     
     # Function to either fetch from keyring or decrypt from cache based on container flag
     def _load_decrypted_secrets():
         # Check if we need to force a refresh
         if refresh:
-            return _load_secrets(organization_id, project_id)
+            return _load_secrets(project_id)
         
         # Otherwise try to use cached values first
         cache_key = f"{organization_id}:{project_id or ''}"
@@ -436,19 +458,20 @@ def get(organization_id=None, project_id=None, refresh=False):
                     return encrypted_secrets.copy()
         
         # If we couldn't get from cache, load fresh
-        return _load_secrets(organization_id, project_id)
+        return _load_secrets(project_id)
     
     # Get all secrets and their keys
     all_secrets = _load_decrypted_secrets()
     secret_keys = set(all_secrets.keys())
     
-    # Store secrets in keyring if available
-    if _KEYRING_AVAILABLE:
+    # Store secrets in keyring if available and requested
+    keyring_usable = _KEYRING_AVAILABLE and use_keyring
+    if keyring_usable:
         for key, value in all_secrets.items():
             keyring.set_password(service_name, key, value)
     
-    # When keyring is unavailable (likely in container)
-    if not _KEYRING_AVAILABLE:
+    # When keyring is unavailable or not requested (likely in container)
+    if not keyring_usable:
         # Create a dictionary of cached secrets for container mode
         container_secrets = {}
         encrypted_data = None
@@ -476,7 +499,7 @@ def get(organization_id=None, project_id=None, refresh=False):
                     return container_secrets[key]
                 
             # If all else fails, load from API
-            fresh_secrets = _load_secrets(organization_id, project_id)
+            fresh_secrets = _load_secrets(project_id)
             if key in fresh_secrets:
                 container_secrets[key] = fresh_secrets[key]
                 return container_secrets[key]

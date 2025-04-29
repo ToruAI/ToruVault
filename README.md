@@ -120,9 +120,6 @@ vault.env_load()
 import os
 print(os.environ.get("SECRET_NAME"))
 
-# Load secrets for a specific organization
-vault.env_load(organization_id="your-org-id")
-
 # Load secrets for a specific project
 vault.env_load(project_id="your-project-id")
 
@@ -144,6 +141,21 @@ secrets = vault.get(refresh=True)
 
 # Get secrets for a specific project
 secrets = vault.get(project_id="your-project-id")
+
+# Use in-memory encryption instead of system keyring
+secrets = vault.get(use_keyring=False)
+```
+
+### Loading secrets from all projects
+
+```python
+import vault
+
+# Load secrets from all projects you have access to into environment variables
+vault.env_load_all()
+
+# Override existing environment variables (default: False)
+vault.env_load_all(override=True)
 ```
 
 ## Security Features
