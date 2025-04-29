@@ -1,6 +1,13 @@
-# Vault
+![Vault Logo](img/logo.png)
+
+# ToruVault
 
 A simple Python package for managing Bitwarden secrets with enhanced security.
+
+
+![Version](https://img.shields.io/badge/version-1.0.0-blue)
+![Python](https://img.shields.io/badge/python-3.10%2B-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
 
 ## Features
 
