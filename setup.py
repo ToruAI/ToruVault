@@ -11,7 +11,7 @@ setup(
     ],
     description="A simple Python package for managing Bitwarden secrets",
     author="Toru AI",
-    author_email="info@toruai.com",
+    author_email="dev@toruai.com",
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",

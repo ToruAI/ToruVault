@@ -15,27 +15,42 @@ A simple Python package for managing Bitwarden secrets with enhanced security.
 
 ## Installation
 
+### Using UV (Recommended)
+
 ```bash
-pip install vault
+# Install UV if you don't have it already
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Install vault package
+uv pip install vault
+
+# Or install in a virtual environment (recommended)
+uv venv create -p python3.10 .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+uv pip install vault
 ```
+
 
 This will automatically install all required dependencies:
 - bitwarden-sdk - For interfacing with Bitwarden API
 - keyring - For secure credential storage
 - cryptography - For encryption/decryption operations
 
-### From Source
+### From Source with UV
 
 ```bash
 # Clone the repository
 git clone https://github.com/ToruAI/vault.git
 cd vault
 
+uv venv create -p python3.10 .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
 # Install dependencies
-pip install -r requirements.txt
+uv pip install -r requirements.txt 
 
 # Install in development mode
-pip install -e .
+uv pip install -e .
 ```
 
 ## Configuration
@@ -152,7 +167,10 @@ For Docker or container environments where keyring is not available, you can use
 # Example Dockerfile
 FROM python:3.10-slim
 
-RUN pip install vault
+# Install UV (optional, can use pip instead)
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+RUN uv pip install vault
+# Or with pip: RUN pip install vault
 
 # Set required environment variables
 ENV BWS_TOKEN=your-bitwarden-token
