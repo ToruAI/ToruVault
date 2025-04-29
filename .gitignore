@@ -29,6 +29,10 @@ htmlcov/
 # State file
 state
 
+# OS specific files
+.DS_Store
+.DS_Store?
+._*
 
 # uv
 uv.lock
