@@ -1,4 +1,6 @@
-<img src="img/logo.svg" alt="ToruVault Logo" width="300"/>
+<p align="center">
+  <img src="img/logo.svg" alt="ToruVault Logo" width="300"/>
+</p>
 
 # ToruVault
 
@@ -177,33 +179,10 @@ The vault package includes several security enhancements:
 6. **Machine-Specific Encryption**: Uses machine-specific identifiers for encryption keys
 7. **Cache Clearing**: Automatically clears secret cache on program exit
 8. **Environment Variable Protection**: Doesn't override existing environment variables by default
+9. **Secure Key Derivation**: Uses PBKDF2 with SHA-256 for key derivation
+10. **No Direct Storage**: Never stores secrets in plain text on disk
 
-## Container Usage
-
-For Docker or container environments where keyring is not available, you can use vault with environment variables:
-
-```dockerfile
-# Example Dockerfile
-FROM python:3.10-slim
-
-# Install UV (optional, can use pip instead)
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh
-RUN uv pip install vault
-# Or with pip: RUN pip install vault
-
-# Set required environment variables
-ENV BWS_TOKEN=your-bitwarden-token
-ENV ORGANIZATION_ID=your-organization-id
-ENV STATE_FILE=/app/state
-
-# Your application code
-COPY . /app
-WORKDIR /app
-
-CMD ["python", "your_app.py"]
-```
-
-## Bitwarden secrets
+## Bitwarden Secrets
 
 ### BWS_TOKEN
 
@@ -235,3 +214,16 @@ Your Bitwarden organization ID. You can get it from the Bitwarden web app:
 The `STATE_FILE` is used by the login_access_token method to store persistent authentication state information after successfully logging in with an access token. 
 
 You can set it to any existing file path. 
+
+## Security Best Practices
+
+When working with secrets, always follow these important guidelines:
+
+1. **Never Embed Keys in Code**: Always use environment variables, keyring, or secure secret management systems.
+2. **Never Commit Secrets**: Add secret files and credentials to your `.gitignore` file.
+3. **Use Key Rotation**: Regularly rotate your access tokens as a security measure.
+4. **Limit Access**: Only provide access to secrets on a need-to-know basis.
+5. **Monitor Usage**: Regularly audit which applications and users are accessing your secrets.
+6. **Use Environment-Specific Secrets**: Use different secrets for development, staging, and production environments.
+
+Remember that the vault package is designed to protect secrets once they're in your system, but you must handle the initial configuration securely.
