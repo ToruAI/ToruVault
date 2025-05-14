@@ -1,7 +1,3 @@
-<p align="center">
-  <img src="img/logo.svg" alt="ToruVault Logo" width="300" onerror="console.log('Logo not found');"/>
-</p>
-
 # ToruVault
 
 A simple Python package for managing Bitwarden secrets with enhanced security.
