@@ -1,6 +1,8 @@
-# ToruVault
+<p align="center">
+  <img src="img/logo.svg" alt="ToruVault Logo" width="300" onerror="console.log('Logo not found');"/>
+</p>
 
-![ToruVault Logo](https://www.toruai.com/toruai-logo.png)
+# ToruVault
 
 A simple Python package for managing Bitwarden secrets with enhanced security.
 
@@ -191,6 +193,7 @@ Your Bitwarden access token. You can get it from the Bitwarden web app:
 3. Go to the "Machine accounts" section
 4. Create new machine account.
 5. Go to Access Token Tab
+![image](img/token-tab.png)
 6. This is your `BWS_TOKEN`. 
 
 Remember that you need to assign access to the machine account for the projects you want to use.

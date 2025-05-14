@@ -3,9 +3,6 @@ Tests for the lazy dictionary implementation in the vault package.
 """
 from unittest.mock import MagicMock
 
-from toru_vault.lazy_dict import LazySecretsDict
-
-
 class TestLazySecretsDict:
     """Test the LazySecretsDict class."""
     

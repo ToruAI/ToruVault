@@ -7,7 +7,6 @@ from unittest.mock import patch, MagicMock
 
 import toru_vault as vault
 
-
 class TestVaultCore:
     """Test core functionality of the vault package."""
     
