@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="img/logo.svg" alt="ToruVault Logo" width="300"/>
+  <img src="https://www.toruai.com/toruai-logo.png" alt="ToruVault Logo" width="300"/>
 </p>
 
 # ToruVault
