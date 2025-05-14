@@ -1,6 +1,8 @@
 name: Publish to PyPI
 
 on:
+  push:
+    branches: [main]
   release:
     types: [created]
   workflow_dispatch:
@@ -29,8 +31,25 @@ jobs:
         
     - name: Update version in setup.py
       run: |
+        # Extract version from release tag or use input value
+        if [[ "${{ github.event_name }}" == "release" ]]; then
+          VERSION="${{ github.ref_name }}"
+          # Remove 'v' prefix if present
+          VERSION="${VERSION#v}"
+        elif [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+          VERSION="${{ github.event.inputs.version }}"
+        else
+          # For push events, increment patch version
+          VERSION="$(grep -oP "version=\"\K[0-9]+\.[0-9]+\.[0-9]+" setup.py)"
+          if [ -z "$VERSION" ]; then
+            VERSION="0.1.0"
+          fi
+        fi
+        
+        echo "Using version: $VERSION"
+        
         if [ -f "setup.py" ]; then
-          sed -i "s/version=.*,/version='${{ github.event.inputs.version || '0.1.0' }}',/g" setup.py
+          sed -i "s/version=.*,/version='$VERSION',/g" setup.py
         else
           echo "setup.py not found, please ensure it exists with proper version configuration"
           exit 1
@@ -42,6 +61,5 @@ jobs:
     - name: Publish package
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
-        user: __token__
         password: ${{ secrets.PYPI_API_TOKEN }}
-        skip_existing: false
+        skip_existing: true
