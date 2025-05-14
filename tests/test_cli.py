@@ -5,9 +5,9 @@ import sys
 from unittest.mock import patch
 from unittest.mock import MagicMock
 
-# Assuming the CLI is implemented in vault.__main__
+# Assuming the CLI is implemented in toru_vault.__main__
 # If it's elsewhere, adjust the import
-import vault
+import toru_vault as vault
 
 
 class TestVaultCLI:

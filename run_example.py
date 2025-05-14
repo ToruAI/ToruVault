@@ -6,9 +6,9 @@ import os
 import sys
 import subprocess
 
-# Import vault to use keyring helper functions
+# Import toru_vault to use keyring helper functions
 try:
-    from vault.vault import _get_from_keyring_or_env, _KEYRING_STATE_FILE_KEY, _KEYRING_ORG_ID_KEY
+    from toru_vault.vault import _get_from_keyring_or_env, _KEYRING_STATE_FILE_KEY, _KEYRING_ORG_ID_KEY
     
     # Get STATE_FILE from keyring or environment
     state_file = _get_from_keyring_or_env(_KEYRING_STATE_FILE_KEY, "STATE_FILE")
@@ -17,7 +17,7 @@ try:
         print(f"Using STATE_FILE from keyring: {state_file}")
     else:
         print("STATE_FILE not found in keyring or environment")
-        print("Please run 'python -m vault init' to set up vault configuration")
+        print("Please run 'python -m toru_vault init' to set up ToruVault configuration")
         sys.exit(1)
     
     # Get ORGANIZATION_ID from keyring or environment
@@ -27,10 +27,10 @@ try:
         print(f"Using ORGANIZATION_ID from keyring: {organization_id}")
     else:
         print("ORGANIZATION_ID not found in keyring or environment")
-        print("Please run 'python -m vault init' to set up vault configuration")
+        print("Please run 'python -m toru_vault init' to set up ToruVault configuration")
         sys.exit(1)
 except ImportError:
-    print("Error: Unable to import vault module")
+    print("Error: Unable to import toru_vault module")
     sys.exit(1)
 
 # Run the usage example

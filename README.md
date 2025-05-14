@@ -30,13 +30,13 @@ A simple Python package for managing Bitwarden secrets with enhanced security.
 # Install UV if you don't have it already
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Install vault package
-uv pip install vault
+# Install toru-vault package
+uv pip install toru-vault
 
 # Or install in a virtual environment (recommended)
 uv venv create -p python3.10 .venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-uv pip install vault
+uv pip install toru-vault
 ```
 
 
@@ -120,7 +120,7 @@ python -m vault list --org-id YOUR_ORGANIZATION_ID
 ### Loading secrets into environment variables
 
 ```python
-import vault
+import toru_vault as vault
 
 # Load all secrets into environment variables
 vault.env_load()
@@ -139,7 +139,7 @@ vault.env_load(override=True)
 ### Getting secrets as a dictionary
 
 ```python
-import vault
+import toru_vault as vault
 
 # Get all secrets as a dictionary
 secrets = vault.get()
@@ -158,7 +158,7 @@ secrets = vault.get(use_keyring=False)
 ### Loading secrets from all projects
 
 ```python
-import vault
+import toru_vault as vault
 
 # Load secrets from all projects you have access to into environment variables
 vault.env_load_all()

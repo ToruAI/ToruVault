@@ -1,5 +1,5 @@
 """
-Common fixtures for testing the vault package.
+Common fixtures for testing the toru_vault package.
 """
 import os
 import tempfile
@@ -25,7 +25,7 @@ def mock_keyring():
             if f"{service}:{key}" in keyring_store:
                 del keyring_store[f"{service}:{key}"]
     
-    with patch("vault.vault._KEYRING_AVAILABLE", True):
+    with patch("toru_vault.vault._KEYRING_AVAILABLE", True):
         with patch("keyring.get_password", MockKeyring.get_password):
             with patch("keyring.set_password", MockKeyring.set_password):
                 with patch("keyring.delete_password", MockKeyring.delete_password):

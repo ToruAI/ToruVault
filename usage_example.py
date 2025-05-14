@@ -3,7 +3,7 @@
 Example showing how to use the vault package
 """
 import os
-import vault
+import toru_vault as vault
 
 # Method 1: Load all secrets into environment variables
 print("Loading secrets into environment variables...")

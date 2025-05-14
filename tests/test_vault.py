@@ -5,7 +5,7 @@ import os
 import time
 from unittest.mock import patch, MagicMock
 
-import vault
+import toru_vault as vault
 
 
 class TestVaultCore:

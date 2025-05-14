@@ -3,9 +3,9 @@ requires = ["setuptools>=42", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "vault"
+name = "toru-vault"
 version = "0.1.0"
-description = "A simple Python package for managing Bitwarden secrets"
+description = "ToruVault: A simple Python package for managing Bitwarden secrets"
 readme = "README.md"
 authors = [
     {name = "ToruAI", email = "mpaszynski@toruai.com"}
@@ -27,10 +27,10 @@ Homepage = "https://github.com/ToruAI/vault"
 Issues = "https://github.com/ToruAI/vault/issues"
 
 [tool.setuptools]
-packages = ["vault"]
+packages = ["toru_vault"]
 
 [tool.setuptools.package-data]
-vault = ["py.typed"]
+toru_vault = ["py.typed"]
 
 [project.scripts]
-vault = "vault.__main__:main"
+toru-vault = "toru_vault.__main__:main"
