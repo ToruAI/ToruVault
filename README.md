@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="img/logo.svg" alt="ToruVault Logo" width="300"/>
+</p>
+
 # ToruVault
 
 A simple Python package for managing Bitwarden secrets with enhanced security.

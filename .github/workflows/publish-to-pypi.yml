@@ -8,9 +8,9 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Package version (default: 0.1.0)'
+        description: 'Package version (default: 0.1.1)'
         required: false
-        default: '0.1.0'
+        default: '0.1.1'
 
 jobs:
   deploy:
@@ -50,7 +50,7 @@ jobs:
           # For push events, increment patch version
           VERSION="$(grep -oP "version=\"\K[0-9]+\.[0-9]+\.[0-9]+" setup.py)"
           if [ -z "$VERSION" ]; then
-            VERSION="0.1.0"
+            VERSION="0.1.1"
           fi
         fi
         
