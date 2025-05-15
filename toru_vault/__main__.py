@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Command-line interface for the vault package.
+Command-line interface for the ToruVault package.
 """
 import argparse
 import os
@@ -48,7 +48,7 @@ def list_projects(organization_id=None):
 
 def init_vault():
     """
-    Initialize vault by storing BWS_TOKEN, ORGANIZATION_ID, and STATE_FILE in keyring.
+    Initialize ToruVault by storing BWS_TOKEN, ORGANIZATION_ID, and STATE_FILE in keyring.
     
     Returns:
         bool: True if initialization was successful
@@ -138,7 +138,7 @@ def init_vault():
         except Exception as e:
             print(f"Warning: Could not create state directory: {e}")
     
-    print("\nVault initialization completed successfully")
+    print("\nToruVault initialization completed successfully")
     return True
 
 
@@ -146,7 +146,7 @@ def main():
     """
     Main entry point for the command-line interface.
     """
-    parser = argparse.ArgumentParser(description="Bitwarden Secret Manager CLI")
+    parser = argparse.ArgumentParser(description="ToruVault: Bitwarden Secret Manager CLI")
     subparsers = parser.add_subparsers(dest="command", help="Command to run")
     
     # List command
@@ -154,7 +154,7 @@ def main():
     list_parser.add_argument("--org-id", "-o", help="Organization ID")
     
     # Init command
-    subparsers.add_parser("init", help="Initialize vault with BWS_TOKEN and ORGANIZATION_ID")
+    subparsers.add_parser("init", help="Initialize ToruVault with BWS_TOKEN and ORGANIZATION_ID")
     
     # Parse arguments
     args = parser.parse_args()

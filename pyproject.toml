@@ -23,8 +23,8 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/ToruAI/vault"
-Issues = "https://github.com/ToruAI/vault/issues"
+Homepage = "https://github.com/ToruAI/ToruVault"
+Issues = "https://github.com/ToruAI/ToruVault/issues"
 
 [tool.setuptools]
 packages = ["toru_vault"]

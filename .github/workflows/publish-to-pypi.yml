@@ -13,23 +13,16 @@ on:
         default: '0.1.2'
 
 jobs:
-  # Test build on multiple platforms
-  build:
-    name: Build on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: ['3.10']
+  deploy:
+    runs-on: ubuntu-latest
     
     steps:
     - uses: actions/checkout@v3
     
-    - name: Set up Python ${{ matrix.python-version }}
+    - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: '3.10'
         
     - name: Install build dependencies
       shell: bash
@@ -39,22 +32,14 @@ jobs:
         pip install -r requirements.txt
         
     - name: Verify package structure
-      shell: bash
       run: |
         echo "Verifying package structure..."
-        if [ "${{ runner.os }}" == "Windows" ]; then
-          Get-ChildItem -Recurse -Filter "*.py" | Select-Object FullName
-          echo "\nChecking for ToruVault in package:"
-          Select-String -Path "*.toml","*.py" -Pattern "toru-vault","toru_vault" -List | Format-Table Path, Pattern
-        else
-          find . -type f -name "*.py" | sort
-          echo "\nChecking for ToruVault in package:"
-          grep -r "toru-vault" --include="*.toml" --include="*.py" .
-          grep -r "toru_vault" --include="*.py" .
-        fi
+        find . -type f -name "*.py" | sort
+        echo "\nChecking for ToruVault in package:"
+        grep -r "toru-vault" --include="*.toml" --include="*.py" .
+        grep -r "toru_vault" --include="*.py" .
         
     - name: Update version in setup.py
-      shell: bash
       run: |
         # Extract version from release tag or use input value
         if [[ "${{ github.event_name }}" == "release" ]]; then
@@ -65,11 +50,7 @@ jobs:
           VERSION="${{ github.event.inputs.version }}"
         else
           # For push events, use the version from setup.py
-          if [ "${{ runner.os }}" == "Windows" ]; then
-            VERSION=$(Select-String -Path "setup.py" -Pattern 'version="([0-9]+\.[0-9]+\.[0-9]+)"' | ForEach-Object { $_.Matches.Groups[1].Value })
-          else
-            VERSION="$(grep -oP 'version="\K[0-9]+\.[0-9]+\.[0-9]+' setup.py)"
-          fi
+          VERSION="$(grep -oP 'version="\K[0-9]+\.[0-9]+\.[0-9]+' setup.py)"
           
           if [ -z "$VERSION" ]; then
             VERSION="0.1.2"
@@ -79,60 +60,20 @@ jobs:
         echo "Using version: $VERSION"
         
         if [ -f "setup.py" ]; then
-          if [ "${{ runner.os }}" == "Windows" ]; then
-            (Get-Content setup.py) -replace 'version=.*,', "version='$VERSION'," | Set-Content setup.py
-          else
-            sed -i "s/version=.*,/version='$VERSION',/g" setup.py
-          fi
+          sed -i "s/version=.*,/version='$VERSION',/g" setup.py
         else
           echo "setup.py not found, please ensure it exists with proper version configuration"
           exit 1
         fi
         
     - name: Build package
-      shell: bash
       run: python -m build
       
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v2
-      with:
-        name: dist-${{ matrix.os }}
-        path: dist/
-        retention-days: 1
-  
-  # Only publish to PyPI if all builds succeed
-  publish:
-    name: Publish to PyPI
-    needs: build
-    if: success() && (github.event_name == 'release' || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main')
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v3
-      
-    - name: Set up Python 3.10
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
-    
-    - name: Download all build artifacts
-      uses: actions/download-artifact@v2
-      with:
-        path: all-dist
-    
-    - name: Display structure of downloaded files
-      run: ls -R all-dist
-      
-    - name: Merge distribution packages
-      run: |
-        mkdir -p dist
-        cp -r all-dist/dist-ubuntu-latest/* dist/
-    
     - name: Publish package to PyPI
+      if: success() && (github.event_name == 'release' || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main')
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
         user: __token__
         password: ${{ secrets.PYPI_API_TOKEN }}
-        repository-url: https://upload.pypi.org/legacy/
         skip-existing: true
         verify-metadata: true
