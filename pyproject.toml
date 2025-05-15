@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "toru-vault"
-version = "0.1.3"
+version = "0.1.4"
 description = "ToruVault: A simple Python package for managing Bitwarden secrets"
 readme = "README.md"
 authors = [
@@ -21,6 +21,9 @@ dependencies = [
     "bitwarden-sdk",
     "cryptography>=36.0.0",
 ]
+
+[project.optional-dependencies]
+keyring = ["keyring>=23.0.0"]
 
 [project.urls]
 Homepage = "https://github.com/ToruAI/ToruVault"

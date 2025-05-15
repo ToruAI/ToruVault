@@ -28,20 +28,26 @@ A simple Python package for managing Bitwarden secrets with enhanced security.
 # Install UV if you don't have it already
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Install toru-vault package
+# Install toru-vault package (basic installation)
 uv pip install toru-vault
+
+# Or install with keyring support (recommended for secure storage)
+uv pip install toru-vault[keyring]
 
 # Or install in a virtual environment (recommended)
 uv venv create -p python3.10 .venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-uv pip install toru-vault
+uv pip install toru-vault[keyring]
 ```
 
-
-This will automatically install all required dependencies:
+This will install all required dependencies:
 - bitwarden-sdk - For interfacing with Bitwarden API
-- keyring - For secure credential storage
 - cryptography - For encryption/decryption operations
+
+And when installed with the keyring option:
+- keyring - For secure credential storage using OS keyring
+
+> **Note:** Keyring is now optional but recommended. Without keyring, some features like `toru-vault init` won't work, and you'll need to use the `use_keyring=False` parameter with the `get()` function to use in-memory encryption instead of the system keyring.
 
 ### From Source with UV
 

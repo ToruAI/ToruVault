@@ -2,13 +2,15 @@ from setuptools import setup, find_packages
 
 setup(
     name="toru-vault",
-    version="0.1.3",
+    version="0.1.4",
     packages=["toru_vault"],
     install_requires=[
         "bitwarden-sdk",
-        "keyring>=23.0.0",
         "cryptography>=36.0.0",
     ],
+    extras_require={
+        "keyring": ["keyring>=23.0.0"],
+    },
     description="ToruVault: A simple Python package for managing Bitwarden secrets",
     author="Toru AI",
     author_email="dev@toruai.com",
