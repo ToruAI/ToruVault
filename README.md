@@ -1,6 +1,4 @@
-<p align="center">
-  <img src="img/logo.svg" alt="ToruVault Logo" width="300"/>
-</p>
+![ToruVault Logo](https://toruai.com/toruai-logo.png)
 
 # ToruVault
 

@@ -530,3 +530,46 @@ def get(project_id=None, refresh=False, use_keyring=True):
         
         # Create the lazy dictionary with keyring getter/setter/deleter
         return LazySecretsDict(secret_keys, _keyring_getter, _keyring_setter, _keyring_deleter)
+
+
+def get_all(refresh=False, use_keyring=True):
+    """
+    Return a combined dictionary of secrets from all projects that user has access to
+    
+    Args:
+        refresh (bool, optional): Force refresh the secrets cache
+        use_keyring (bool, optional): Whether to use system keyring (True) or in-memory encryption (False)
+        
+    Returns:
+        dict: Dictionary of secrets with their names as keys, using lazy loading
+    """
+    # Initialize the client
+    client = _initialize_client()
+    if not client:
+        logging.error("Failed to initialize Bitwarden client")
+        return {}
+
+    # Get organization ID
+    organization_id = _get_from_keyring_or_env("ORGANIZATION_ID", "ORGANIZATION_ID")
+    if not organization_id:
+        logging.error("Organization ID not found in keyring or environment variables")
+        return {}
+
+    try:
+        # Get all projects
+        projects = client.projects_api.get_projects(organization_id)
+        if not projects or not projects.data:
+            logging.warning("No projects found in the organization")
+            return {}
+
+        # Create a combined dictionary with all secrets
+        all_secrets = {}
+        for project in projects.data:
+            project_secrets = get(project.id, refresh=refresh, use_keyring=use_keyring)
+            # Update the combined dictionary (note: this will overwrite duplicate keys)
+            all_secrets.update(project_secrets)
+
+        return all_secrets
+    except Exception as e:
+        logging.error(f"Error retrieving projects: {str(e)}")
+        return {}
