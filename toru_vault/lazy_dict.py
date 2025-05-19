@@ -4,8 +4,9 @@ from typing import Dict, Optional, Callable, Set, Iterator, Tuple
 class LazySecretsDict(MutableMapping):
     """
     A dictionary-like class that only loads/decrypts secrets when they are accessed.
-    When container=True, it uses the existing encryption methods.
-    When container=False, it uses OS keyring for secure storage.
+    The specific mechanisms for fetching and storing secrets (e.g., using OS keyring
+    or other encryption methods) are determined by the functions provided during
+    its instantiation.
     """
     
     def __init__(self, 

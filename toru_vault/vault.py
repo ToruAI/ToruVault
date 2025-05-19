@@ -63,9 +63,8 @@ def _generate_encryption_key(salt: bytes = None) -> Tuple[bytes, bytes]:
 
 def _get_machine_id() -> str:
     """Get a unique identifier for the current machine"""
-    # Try platform-specific methods to get a machine ID
     machine_id = ""
-    
+    # MacOS and Linux
     if os.path.exists('/etc/machine-id'):
         with open('/etc/machine-id', 'r') as f:
             machine_id = f.read().strip()
@@ -80,10 +79,10 @@ def _get_machine_id() -> str:
                 machine_id = result.stdout.strip().split('\n')[-1].strip()
         except (FileNotFoundError, subprocess.SubprocessError):
             pass
-    
-    # Fallback if we couldn't get a machine ID
+
     if not machine_id:
-        # Use a combination of hostname and a persisted random value
+        # ome systems truncate nodename to 8 characters or to the leading component;
+        # a better way to get the hostname is socket.gethostname()
         import socket
         hostname = socket.gethostname()
         
@@ -176,8 +175,14 @@ def _secure_state_file(state_path: str) -> None:
                 os.chmod(state_path, stat.S_IRUSR | stat.S_IWUSR)  # 0600 permissions
             elif os.name == 'nt':  # Windows
                 import subprocess
-                subprocess.run(['icacls', state_path, '/inheritance:r', '/grant:r', f'{os.getlogin()}:(F)'], 
+                # /inheritance:r - Removes all inherited ACEs (Access Control Entries).
+                # /grant:r - Grants specified user rights, replacing any previous explicit ACEs for that user.
+                # <os.getlogin()>:(F) - Grants the current user (F)ull control.
+                result = subprocess.run(['icacls', state_path, '/inheritance:r', '/grant:r', f'{os.getlogin()}:(F)'], 
                                capture_output=True)
+                if result.returncode != 0:
+                    raise Exception(f"Could not set secure permissions on state file: {result.stderr.decode()}")
+        
     except Exception as e:
         logger.warning(f"Could not set secure permissions on state file: {e}")
 
@@ -240,14 +245,12 @@ def _initialize_client():
     """
     Initialize the Bitwarden client
     """
-    # Get environment variables with defaults
+
     api_url = os.getenv("API_URL", "https://api.bitwarden.com")
     identity_url = os.getenv("IDENTITY_URL", "https://identity.bitwarden.com")
     
-    # Get BWS_TOKEN from keyring or environment variable
     bws_token = _get_from_keyring_or_env(_KEYRING_BWS_TOKEN_KEY, "BWS_TOKEN")
-    
-    # Get STATE_FILE from keyring or environment variable
+
     state_path = _get_from_keyring_or_env(_KEYRING_STATE_FILE_KEY, "STATE_FILE")
     
     # Validate required environment variables
@@ -302,38 +305,30 @@ def _load_secrets(project_id=None):
         logger.error(f"Failed to initialize Bitwarden client: {e}")
         return {}
     
-    # Get ORGANIZATION_ID from keyring or environment variable
     organization_id = _get_from_keyring_or_env(_KEYRING_ORG_ID_KEY, "ORGANIZATION_ID")
     if not organization_id:
         logger.error("ORGANIZATION_ID not found in keyring or environment variable")
         return {}
     
-    # Get secrets from BitWarden
     try:
-        # Sync secrets to ensure we have the latest
         client.secrets().sync(organization_id, None)
         
-        # Initialize empty secrets dictionary
         secrets = {}
         
-        # Retrieve all secrets
+        # Retrieve all secrets details (no values)
         all_secrets = client.secrets().list(organization_id)
         
-        # Validate response format
         if not hasattr(all_secrets, 'data') or not hasattr(all_secrets.data, 'data'):
             return {}
         
-        # We need to collect all secret IDs first
         secret_ids = []
         for secret in all_secrets.data.data:
             secret_ids.append(secret.id)
         
-        # If we have secret IDs, fetch their values
         if secret_ids:
-            # Get detailed information for all secrets by their IDs
+            # Fetch value for each secret
             secrets_detailed = client.secrets().get_by_ids(secret_ids)
             
-            # Validate response format
             if not hasattr(secrets_detailed, 'data') or not hasattr(secrets_detailed.data, 'data'):
                 return {}
             
@@ -422,7 +417,7 @@ def env_load_all(override=False):
     except Exception as e:
         logger.error(f"Failed to load all secrets into environment variables: {e}")
 
-def get(project_id=None, refresh=False, use_keyring=True):
+def get(project_id=None, refresh=False, use_keyring=False):
     """
     Return a dictionary of all project secrets
     
