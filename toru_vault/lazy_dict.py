@@ -1,5 +1,5 @@
 from collections.abc import MutableMapping
-from typing import Dict, Optional, Callable, Set, Iterator, Tuple
+from typing import Optional, Callable, Set, Iterator, Tuple
 
 class LazySecretsDict(MutableMapping):
     """
@@ -27,21 +27,18 @@ class LazySecretsDict(MutableMapping):
         self._getter = getter_func
         self._setter = setter_func
         self._deleter = deleter_func
-        self._cache: Dict[str, str] = {}
     
     def __getitem__(self, key: str) -> str:
-        """Get an item from the dictionary, fetching/decrypting it on first access."""
+        """Get an item from the dictionary, fetching/decrypting it on each access."""
         if key not in self._keys:
             raise KeyError(key)
             
-        # If not in cache, fetch it
-        if key not in self._cache:
-            value = self._getter(key)
-            if value is None:
-                raise KeyError(f"Failed to retrieve value for key: {key}")
-            self._cache[key] = value
+        # Always fetch and decrypt fresh to avoid keeping decrypted values in memory
+        value = self._getter(key)
+        if value is None:
+            raise KeyError(f"Failed to retrieve value for key: {key}")
             
-        return self._cache[key]
+        return value
     
     def __setitem__(self, key: str, value: str) -> None:
         """Set an item in the dictionary."""
@@ -74,15 +71,12 @@ class LazySecretsDict(MutableMapping):
         return len(self._keys)
     
     def items(self) -> Iterator[Tuple[str, str]]:
-        """Return an iterator over (key, value) pairs."""
         for key in self._keys:
             yield (key, self[key])
             
     def keys(self) -> Set[str]:
-        """Return the set of keys."""
         return self._keys.copy()
     
     def values(self) -> Iterator[str]:
-        """Return an iterator over values."""
         for key in self._keys:
             yield self[key]

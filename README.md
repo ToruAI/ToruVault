@@ -5,7 +5,7 @@
 A simple Python package for managing Bitwarden secrets with enhanced security.
 
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue)
+![Version](https://img.shields.io/badge/version-0.2.0-blue)
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
@@ -14,8 +14,8 @@ A simple Python package for managing Bitwarden secrets with enhanced security.
 - Load secrets from Bitwarden Secret Manager into environment variables
 - Get secrets as a Python dictionary
 - Filter secrets by project ID
-- Secure in-memory caching with encryption
-- Automatic cache expiration (5 minutes)
+- JIT decryption of individual secrets
+- No persistent caching of decrypted values
 - Secure file permissions for state storage
 - Machine-specific secret protection
 - Secure credential storage using OS keyring
@@ -176,11 +176,10 @@ vault.env_load_all(override=True)
 The vault package includes several security enhancements:
 
 1. **OS Keyring Integration**: Securely stores BWS_TOKEN, ORGANIZATION_ID, and STATE_FILE in your OS keyring
-2. **Memory Protection**: Secrets are encrypted in memory using Fernet encryption (AES-128)
-3. **Lazy Decryption**: Secrets are only decrypted when explicitly accessed
-4. **Cache Expiration**: Cached secrets expire after 5 minutes by default
-5. **Secure File Permissions**: Sets secure permissions on state files
-6. **Machine-Specific Encryption**: Uses machine-specific identifiers for encryption keys
+2. **Memory Protection**: Secrets are individually encrypted in memory using Fernet encryption (AES-128)
+3. **JIT Decryption**: Secrets are only decrypted when explicitly accessed and never stored in decrypted form
+4. **Secure File Permissions**: Sets secure permissions on state files
+5. **Machine-Specific Encryption**: Uses machine-specific identifiers for encryption keys
 7. **Cache Clearing**: Automatically clears secret cache on program exit
 8. **Environment Variable Protection**: Doesn't override existing environment variables by default
 9. **Secure Key Derivation**: Uses PBKDF2 with SHA-256 for key derivation

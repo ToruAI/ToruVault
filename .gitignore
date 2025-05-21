@@ -26,6 +26,10 @@ ENV/
 htmlcov/
 .pytest_cache/
 
+
+#Prototyping
+toru.py
+usage_example.py
 # State file
 state
 

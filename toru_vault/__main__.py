@@ -7,9 +7,32 @@ import os
 import sys
 import getpass
 
-from .vault import (_initialize_client, set_to_keyring, _get_from_keyring_or_env,
-                   _KEYRING_BWS_TOKEN_KEY, _KEYRING_ORG_ID_KEY, _KEYRING_STATE_FILE_KEY, 
-                   _KEYRING_AVAILABLE)
+from .vault import (_initialize_client, _get_from_keyring_or_env,
+                   _KEYRING_SERVICE_NAME, _KEYRING_BWS_TOKEN_KEY, _KEYRING_ORG_ID_KEY, 
+                   _KEYRING_STATE_FILE_KEY, _KEYRING_AVAILABLE)
+
+
+def _set_to_keyring(key, value):
+    """
+    Set a value to keyring
+    
+    Args:
+        key (str): Key in keyring
+        value (str): Value to store
+    
+    Returns:
+        bool: True if successful, False otherwise
+    """
+    if not _KEYRING_AVAILABLE:
+        return False
+    
+    try:
+        import keyring
+        keyring.set_password(_KEYRING_SERVICE_NAME, key, value)
+        return True
+    except Exception as e:
+        print(f"Failed to set {key} to keyring: {e}")
+        return False
 
 
 def list_projects(organization_id=None):
@@ -103,21 +126,21 @@ def init_vault():
     # Store in keyring
     if _KEYRING_AVAILABLE:
         if existing_token != token or not existing_token:
-            if set_to_keyring(_KEYRING_BWS_TOKEN_KEY, token):
+            if _set_to_keyring(_KEYRING_BWS_TOKEN_KEY, token):
                 print("BWS_TOKEN stored in keyring")
             else:
                 print("Failed to store BWS_TOKEN in keyring")
                 return False
         
         if existing_org_id != org_id or not existing_org_id:
-            if set_to_keyring(_KEYRING_ORG_ID_KEY, org_id):
+            if _set_to_keyring(_KEYRING_ORG_ID_KEY, org_id):
                 print("ORGANIZATION_ID stored in keyring")
             else:
                 print("Failed to store ORGANIZATION_ID in keyring")
                 return False
         
         if existing_state_file != state_file or not existing_state_file:
-            if set_to_keyring(_KEYRING_STATE_FILE_KEY, state_file):
+            if _set_to_keyring(_KEYRING_STATE_FILE_KEY, state_file):
                 print("STATE_FILE stored in keyring")
             else:
                 print("Failed to store STATE_FILE in keyring")

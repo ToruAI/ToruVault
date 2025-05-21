@@ -1,128 +1,87 @@
-"""
-Common fixtures for testing the toru_vault package.
-"""
 import os
-import tempfile
 import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch, MagicMock
 
 @pytest.fixture
-def mock_keyring():
-    """Mock keyring module with in-memory storage"""
-    keyring_store = {}
-    
-    class MockKeyring:
-        @staticmethod
-        def get_password(service, key):
-            return keyring_store.get(f"{service}:{key}")
-            
-        @staticmethod
-        def set_password(service, key, value):
-            keyring_store[f"{service}:{key}"] = value
-            
-        @staticmethod
-        def delete_password(service, key):
-            if f"{service}:{key}" in keyring_store:
-                del keyring_store[f"{service}:{key}"]
-    
-    with patch("toru_vault.vault._KEYRING_AVAILABLE", True):
-        with patch("keyring.get_password", MockKeyring.get_password):
-            with patch("keyring.set_password", MockKeyring.set_password):
-                with patch("keyring.delete_password", MockKeyring.delete_password):
-                    # Set the organization_id in the keyring
-                    MockKeyring.set_password("bitwarden_vault", "organization_id", "test-org-id")
-                    yield MockKeyring
-                    
-@pytest.fixture
 def mock_env_vars():
-    """Set up and tear down environment variables"""
-    original_env = os.environ.copy()
-    
-    # Set test environment variables
-    os.environ["BWS_TOKEN"] = "test-token"
-    os.environ["ORGANIZATION_ID"] = "test-org-id"
-    
-    # Create a temporary file for the state file
-    fd, state_path = tempfile.mkstemp()
-    os.close(fd)
-    os.environ["STATE_FILE"] = state_path
+    """Mock environment variables for testing"""
+    original_environ = os.environ.copy()
+    os.environ["BWS_TOKEN"] = "test_token"
+    os.environ["ORGANIZATION_ID"] = "test_org_id"
+    os.environ["STATE_FILE"] = "test_state_file"
     
     yield
     
-    # Clean up
-    os.unlink(state_path)
+    # Restore original environment
     os.environ.clear()
-    os.environ.update(original_env)
-    
+    os.environ.update(original_environ)
+
+@pytest.fixture
+def mock_keyring():
+    """Mock keyring for testing"""
+    with patch("keyring.get_password") as mock_get, patch("keyring.set_password") as mock_set:
+        mock_get.return_value = None  # Default to None, tests can override if needed
+        mock_set.return_value = None
+        yield mock_get, mock_set
+
 @pytest.fixture
 def mock_bitwarden_client():
-    """Mock the Bitwarden client with test secrets"""
-    mock_client = MagicMock()
+    """Create a mock Bitwarden client for testing"""
+    client = MagicMock()
     
     # Mock secrets service
-    mock_secrets = MagicMock()
-    mock_client.secrets.return_value = mock_secrets
+    secrets_service = MagicMock()
+    
+    # Mock successful sync response
+    sync_response = MagicMock()
+    sync_response.success = True
+    secrets_service.sync.return_value = sync_response
+    
+    # Mock secrets list response
+    secrets_list = MagicMock()
+    secrets_list.data = MagicMock()
+    secrets_list.data.data = [
+        MagicMock(id="secret1"),
+        MagicMock(id="secret2"),
+    ]
+    secrets_service.list.return_value = secrets_list
+    
+    # Mock get_by_ids response with test secrets
+    secrets_detailed = MagicMock()
+    secrets_detailed.data = MagicMock()
+    secret1 = MagicMock(key="TEST_SECRET1", value="test_value1", project_id="project1")
+    secret2 = MagicMock(key="TEST_SECRET2", value="test_value2", project_id="project1")
+    secrets_detailed.data.data = [secret1, secret2]
+    secrets_service.get_by_ids.return_value = secrets_detailed
+    
+    # Attach secrets service to client
+    client.secrets.return_value = secrets_service
     
     # Mock projects service
-    mock_projects = MagicMock()
-    mock_client.projects.return_value = mock_projects
+    projects_service = MagicMock()
+    projects_list = MagicMock()
+    projects_list.data = MagicMock()
+    project1 = MagicMock(id="project1", name="Test Project")
+    projects_list.data.data = [project1]
+    projects_service.list.return_value = projects_list
     
-    # Mock sync method
-    mock_secrets.sync = MagicMock()
+    # Attach projects service to client
+    client.projects.return_value = projects_service
     
-    # Mock list_projects method
-    project_data = [
-        {"id": "project1", "name": "Test Project 1"},
-        {"id": "project2", "name": "Test Project 2"}
-    ]
+    # Mock auth service
+    auth_service = MagicMock()
+    login_response = MagicMock()
+    login_response.success = True
+    auth_service.login_access_token.return_value = login_response
     
-    # Create projects response object structure
-    class MockProjectsData:
-        def __init__(self):
-            self.data = project_data
+    # Attach auth service to client
+    client.auth.return_value = auth_service
     
-    class MockProjectsResponse:
-        def __init__(self):
-            self.data = MockProjectsData()
-    
-    mock_projects.list = MagicMock(return_value=MockProjectsResponse())
-    
-    # Mock get_secrets method with test data
-    project1_secrets = {
-        "SECRET1": "value1",
-        "SECRET2": "value2"
-    }
-    project2_secrets = {
-        "SECRET3": "value3",
-        "SECRET4": "value4"
-    }
-    
-    def mock_get_secrets(org_id, project_id):
-        if project_id == "project1":
-            return [{"key": k, "value": v} for k, v in project1_secrets.items()]
-        elif project_id == "project2":
-            return [{"key": k, "value": v} for k, v in project2_secrets.items()]
-        return []
-    
-    mock_secrets.get_secrets = MagicMock(side_effect=mock_get_secrets)
-    
-    # Also directly patch the _load_secrets function to return the test data
-    # This is needed because our tests are failing at the API level
-    def mock_load_secrets(project_id=None):
-        if project_id == "project1":
-            return project1_secrets.copy()
-        elif project_id == "project2":
-            return project2_secrets.copy()
-        elif project_id is None:
-            # Combine all secrets
-            all_secrets = {}
-            all_secrets.update(project1_secrets)
-            all_secrets.update(project2_secrets)
-            return all_secrets
-        return {}
-    
-    # Patch the BitwardenClient class and _load_secrets
-    with patch("bitwarden_sdk.BitwardenClient", return_value=mock_client):
-        with patch("vault.vault._initialize_client", return_value=mock_client):
-            with patch("vault.vault._load_secrets", side_effect=mock_load_secrets):
-                yield mock_client
+    return client
+
+@pytest.fixture
+def mock_initialize_client(mock_bitwarden_client):
+    """Mock the _initialize_client function to return our mock client"""
+    with patch("toru_vault.vault._initialize_client") as mock_init:
+        mock_init.return_value = mock_bitwarden_client
+        yield mock_init
