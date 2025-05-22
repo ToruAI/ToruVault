@@ -2,6 +2,10 @@
 
 # ToruVault
 
+**ToruVault** is a Python secrets manager and env manager with Bitwarden integration. Securely manage API keys, environment variables, and secrets for your Python projects. Designed for developers who need a reliable secrets manager for Python, ToruVault is the easiest way to use Bitwarden as your API key manager and environment variable manager.
+
+---
+
 A simple Python package for managing Bitwarden secrets with enhanced security.
 
 
@@ -11,8 +15,10 @@ A simple Python package for managing Bitwarden secrets with enhanced security.
 
 ## Features
 
-- Load secrets from Bitwarden Secret Manager into environment variables
-- Get secrets as a Python dictionary
+- **Secrets Manager Python**: Manage and retrieve secrets securely in your Python applications
+- **Env Manager**: Load environment variables from Bitwarden Secret Manager
+- **API Key Manager**: Store and access API keys securely
+- **Bitwarden Python Integration**: Native support for Bitwarden as a backend
 - Filter secrets by project ID
 - JIT decryption of individual secrets
 - No persistent caching of decrypted values
@@ -230,3 +236,26 @@ When working with secrets, always follow these important guidelines:
 6. **Use Environment-Specific Secrets**: Use different secrets for development, staging, and production environments.
 
 Remember that the vault package is designed to protect secrets once they're in your system, but you must handle the initial configuration securely.
+
+---
+
+## FAQ
+
+**Q: Can ToruVault be used as an env manager?**  
+A: Yes! ToruVault is designed to securely manage and load environment variables from Bitwarden into your Python environment, making it a robust env manager for any Python project.
+
+**Q: Is ToruVault an API key manager?**  
+A: Absolutely. ToruVault lets you store, manage, and retrieve API keys securely using Bitwarden, acting as a powerful API key manager for Python applications.
+
+**Q: Is ToruVault a secrets manager for Python?**  
+A: Yes, ToruVault is a secrets manager Python developers can use to securely access and manage secrets, credentials, and sensitive configuration.
+
+**Q: Does ToruVault integrate with Bitwarden?**  
+A: Yes! ToruVault provides native Bitwarden Python integration, allowing you to use Bitwarden as your backend for secret storage and retrieval.
+
+**Q: How do I use ToruVault with Bitwarden?**  
+A: Simply follow the setup instructions above to connect ToruVault to your Bitwarden Secret Manager account, then use the provided Python API or CLI commands to manage your secrets, environment variables, and API keys.
+
+---
+
+> **Keywords:** env manager, api key manager, secrets manager python, bitwarden python, environment variable manager, Bitwarden integration

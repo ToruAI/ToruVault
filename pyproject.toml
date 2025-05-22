@@ -3,9 +3,10 @@ requires = ["setuptools>=42", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
+keywords = ["env manager", "api key manager", "secrets manager python", "bitwarden python", "environment variable manager", "secret management", "keyring", "Bitwarden integration"]
 name = "toru-vault"
-version = "0.2.0"
-description = "ToruVault: A simple Python package for managing Bitwarden secrets"
+version = "0.2.1"
+description = "A Python secrets manager and env manager for Bitwarden. Securely manage API keys, environment variables, and secrets. Bitwarden Python integration."
 readme = "README.md"
 authors = [
     {name = "ToruAI", email = "mpaszynski@toruai.com"}
@@ -15,6 +16,12 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
+    "Topic :: Security",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Intended Audience :: Developers",
+    "Environment :: Console",
+    "Topic :: System :: Systems Administration",
+    "Topic :: Utilities"
 ]
 requires-python = ">=3.6"
 dependencies = [
