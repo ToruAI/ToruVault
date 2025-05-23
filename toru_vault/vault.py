@@ -20,6 +20,7 @@ _KEYRING_SERVICE_NAME = "bitwarden_vault"
 _KEYRING_BWS_TOKEN_KEY = "bws_token"
 _KEYRING_ORG_ID_KEY = "organization_id"
 _KEYRING_STATE_FILE_KEY = "state_file"
+_KEYRING_PROJECT_ID_KEY = "project_id"
 
 def _get_from_keyring_or_env(key, env_var):
     """
@@ -125,7 +126,7 @@ def env_load(project_id=None, override=False):
     Load all secrets related to the project into environmental variables.
     
     Args:
-        project_id (str, optional): Project ID to filter secrets
+        project_id (str, optional): Project ID to filter secrets. If None, will try to get from keyring or PROJECT_ID environment variable
         override (bool, optional): Whether to override existing environment variables
     """
     try:
@@ -137,6 +138,10 @@ def env_load(project_id=None, override=False):
     if not organization_id:
         logger.error("ORGANIZATION_ID not found in keyring or environment variable")
         return
+    
+    # If project_id is not provided, try to get it from keyring or environment variable
+    if project_id is None:
+        project_id = _get_from_keyring_or_env(_KEYRING_PROJECT_ID_KEY, "PROJECT_ID")
     
     secrets = load_secrets_env(client, organization_id, project_id)
 
@@ -171,7 +176,7 @@ def get(project_id=None, use_keyring=True):
     Return a dictionary of all project secrets with JIT decryption
     
     Args:
-        project_id (str, optional): Project ID to filter secrets
+        project_id (str, optional): Project ID to filter secrets. If None, will try to get from keyring or PROJECT_ID environment variable
         use_keyring (bool, optional): Whether to use system keyring (True) or in-memory encryption (False)
         
     Returns:
@@ -187,6 +192,10 @@ def get(project_id=None, use_keyring=True):
     if not organization_id:
         logger.error("ORGANIZATION_ID not found in keyring or environment variable")
         return {}
+    
+    # If project_id is not provided, try to get it from keyring or environment variable
+    if project_id is None:
+        project_id = _get_from_keyring_or_env(_KEYRING_PROJECT_ID_KEY, "PROJECT_ID")
     
     from .in_memory import load_secrets_memory
     all_secrets = load_secrets_memory(client, organization_id, project_id)
