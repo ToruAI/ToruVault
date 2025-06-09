@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name="toru-vault",
-    version="0.2.0",
+    version="0.3.0",
     packages=["toru_vault"],
     install_requires=[
         "bitwarden-sdk",

@@ -5,7 +5,7 @@
 A simple Python package for managing Bitwarden secrets with enhanced security.
 
 
-![Version](https://img.shields.io/badge/version-0.2.0-blue)
+![Version](https://img.shields.io/badge/version-0.3.0-blue)
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
@@ -95,6 +95,7 @@ Alternatively, you can set the following environment variables:
 - `BWS_TOKEN`: Your Bitwarden access token
 - `ORGANIZATION_ID`: Your Bitwarden organization ID
 - `STATE_FILE`: Path to the state file (must be in an existing directory)
+- `PROJECT_ID` (optional): Your Bitwarden project ID to filter secrets
 - `API_URL` (optional): Defaults to "https://api.bitwarden.com"
 - `IDENTITY_URL` (optional): Defaults to "https://identity.bitwarden.com"
 
@@ -136,6 +137,11 @@ print(os.environ.get("SECRET_NAME"))
 # Load secrets for a specific project
 vault.env_load(project_id="your-project-id")
 
+# Alternatively, set PROJECT_ID environment variable and call without parameter
+# export PROJECT_ID="your-project-id"  # Linux/macOS
+# set PROJECT_ID=your-project-id     # Windows
+vault.env_load()  # Will use PROJECT_ID from environment
+
 # Override existing environment variables (default: False)
 vault.env_load(override=True)
 ```
@@ -154,6 +160,11 @@ secrets = vault.get(refresh=True)
 
 # Get secrets for a specific project
 secrets = vault.get(project_id="your-project-id")
+
+# Alternatively, set PROJECT_ID environment variable and call without parameter
+# export PROJECT_ID="your-project-id"  # Linux/macOS
+# set PROJECT_ID=your-project-id     # Windows
+secrets = vault.get()  # Will use PROJECT_ID from environment
 
 # Use in-memory encryption instead of system keyring
 secrets = vault.get(use_keyring=False)
