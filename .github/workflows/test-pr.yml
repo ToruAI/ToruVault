@@ -21,7 +21,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         if [ -f tests/requirements-dev.txt ]; then pip install -r tests/requirements-dev.txt; fi
-        pip install -e .
+        pip install -e .[keyring]
     - name: Run tests
       run: |
         cd tests && python -m pytest
