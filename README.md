@@ -2,7 +2,7 @@
 
 # ToruVault
 
-A simple Python package for managing Bitwarden secrets with enhanced security.
+A secure Python secrets manager and environment variable manager for Bitwarden integration. Safely manage API keys and secrets in your Python applications.
 
 
 ![Version](https://img.shields.io/badge/version-0.3.0-blue)
@@ -11,14 +11,14 @@ A simple Python package for managing Bitwarden secrets with enhanced security.
 
 ## Features
 
-- Load secrets from Bitwarden Secret Manager into environment variables
-- Get secrets as a Python dictionary
-- Filter secrets by project ID
-- JIT decryption of individual secrets
-- No persistent caching of decrypted values
-- Secure file permissions for state storage
-- Machine-specific secret protection
-- Secure credential storage using OS keyring
+- **Secrets Manager for Python**: Load secrets from Bitwarden Secret Manager into environment variables
+- **API Key Management**: Access and manage API keys securely in your Python applications
+- **Environment Variable Manager**: Easily inject secrets as environment variables
+- **Bitwarden Python Integration**: Seamless integration with Bitwarden Secret Manager
+- **Secure In-Memory Caching**: Encrypted caching with automatic expiration (5 minutes)
+- **Project-Based Secret Filtering**: Filter secrets by project ID
+- **Secure Storage**: Machine-specific secret protection with proper file permissions
+- **OS Keyring Integration**: Secure credential storage using your operating system's keyring
 
 ## Installation
 
@@ -122,7 +122,7 @@ python -m vault list --org-id YOUR_ORGANIZATION_ID
 
 ## Python Usage
 
-### Loading secrets into environment variables
+### Loading secrets into environment variables (Env Manager)
 
 ```python
 import toru_vault as vault
@@ -184,19 +184,20 @@ vault.env_load_all(override=True)
 
 ## Security Features
 
-The vault package includes several security enhancements:
+ToruVault provides robust security for your API keys and environment variables:
 
 1. **OS Keyring Integration**: Securely stores BWS_TOKEN, ORGANIZATION_ID, and STATE_FILE in your OS keyring
-2. **Memory Protection**: Secrets are individually encrypted in memory using Fernet encryption (AES-128)
-3. **JIT Decryption**: Secrets are only decrypted when explicitly accessed and never stored in decrypted form
-4. **Secure File Permissions**: Sets secure permissions on state files
-5. **Machine-Specific Encryption**: Uses machine-specific identifiers for encryption keys
+2. **Memory Protection**: Secrets are encrypted in memory using Fernet encryption (AES-128)
+3. **Lazy Decryption**: Secrets are only decrypted when explicitly accessed
+4. **Cache Expiration**: Cached secrets expire after 5 minutes by default
+5. **Secure File Permissions**: Sets secure permissions on state files
+6. **Machine-Specific Encryption**: Uses machine-specific identifiers for encryption keys
 7. **Cache Clearing**: Automatically clears secret cache on program exit
 8. **Environment Variable Protection**: Doesn't override existing environment variables by default
 9. **Secure Key Derivation**: Uses PBKDF2 with SHA-256 for key derivation
 10. **No Direct Storage**: Never stores secrets in plain text on disk
 
-## Bitwarden Secrets
+## Bitwarden Python Integration
 
 ### BWS_TOKEN
 
@@ -241,3 +242,18 @@ When working with secrets, always follow these important guidelines:
 6. **Use Environment-Specific Secrets**: Use different secrets for development, staging, and production environments.
 
 Remember that the vault package is designed to protect secrets once they're in your system, but you must handle the initial configuration securely.
+
+## Why Choose ToruVault
+
+ToruVault stands out as a comprehensive solution for Python developers who need:
+
+- A reliable **secrets manager for Python** applications
+- Secure **API key management** with encryption
+- An **environment variable manager** that simplifies configuration
+- Seamless **Bitwarden Python integration** for team secret sharing
+
+By combining the security of Bitwarden with the convenience of Python's environment variables, ToruVault provides a robust solution for managing sensitive information in your applications.
+
+## License
+
+ToruVault is released under the MIT License. See the LICENSE file for details.
