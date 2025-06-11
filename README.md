@@ -187,10 +187,8 @@ ToruVault provides robust security for your API keys and environment variables:
 1. **OS Keyring Integration**: Securely stores BWS_TOKEN, ORGANIZATION_ID, and STATE_FILE in your OS keyring
 2. **Memory Protection**: Secrets are encrypted in memory using Fernet encryption (AES-128)
 3. **Lazy Decryption**: Secrets are only decrypted when explicitly accessed
-4. **Cache Expiration**: Cached secrets expire after 5 minutes by default
 5. **Secure File Permissions**: Sets secure permissions on state files
 6. **Machine-Specific Encryption**: Uses machine-specific identifiers for encryption keys
-7. **Cache Clearing**: Automatically clears secret cache on program exit
 8. **Environment Variable Protection**: Doesn't override existing environment variables by default
 9. **Secure Key Derivation**: Uses PBKDF2 with SHA-256 for key derivation
 10. **No Direct Storage**: Never stores secrets in plain text on disk
