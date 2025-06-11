@@ -15,7 +15,6 @@ A secure Python secrets manager and environment variable manager for Bitwarden i
 - **API Key Management**: Access and manage API keys securely in your Python applications
 - **Environment Variable Manager**: Easily inject secrets as environment variables
 - **Bitwarden Python Integration**: Seamless integration with Bitwarden Secret Manager
-- **Secure In-Memory Caching**: Encrypted caching with automatic expiration (5 minutes)
 - **Project-Based Secret Filtering**: Filter secrets by project ID
 - **Secure Storage**: Machine-specific secret protection with proper file permissions
 - **OS Keyring Integration**: Secure credential storage using your operating system's keyring
@@ -63,7 +62,7 @@ source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 uv pip install -r requirements.txt 
 
 # Install in development mode
-uv pip install -e .
+uv pip install -e .[keyring]
 ```
 
 ## Configuration
