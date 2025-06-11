@@ -16,7 +16,6 @@ A secure Python secrets manager and environment variable manager for Bitwarden i
 - **Environment Variable Manager**: Easily inject secrets as environment variables
 - **Bitwarden Python Integration**: Seamless integration with Bitwarden Secret Manager
 - **Project-Based Secret Filtering**: Filter secrets by project ID
-- **Secure Storage**: Machine-specific secret protection with proper file permissions
 - **OS Keyring Integration**: Secure credential storage using your operating system's keyring
 
 ## Installation
